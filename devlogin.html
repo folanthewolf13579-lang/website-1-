@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Portal</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --dark: #1e293b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            background: var(--dark);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 350px;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover { opacity: 0.8; }
+
+        .fx-area {
+            height: 100px;
+            border: 2px dashed #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            cursor: crosshair;
+            position: relative;
+        }
+
+        .click-spark {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: yellow;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: explode 0.5s forwards;
+        }
+
+        @keyframes explode {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        .dev-data {
+            text-align: left;
+            background: #000;
+            padding: 10px;
+            font-family: monospace;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .btn-wipe { background: var(--danger); margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="container">
+        <h2>Welcome</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="dev-code" placeholder="Dev Code (Optional)">
+        <button onclick="handleLogin()">Login</button>
+    </div>
+
+    <div id="user-screen" class="container hidden">
+        <h2 id="greet">Hello User</h2>
+        <textarea id="user-notes" placeholder="Write something down..." rows="4"></textarea>
+        <button onclick="saveData()">Save Notes</button>
+        
+        <p>Click below for FX:</p>
+        <div class="fx-area" id="fx-box">Click Me!</div>
+        <button onclick="logout()" style="margin-top:10px; background:#475569">Logout</button>
+    </div>
+
+    <div id="dev-screen" class="container hidden">
+        <h2 style="color: #fbbf24;">Dev Dashboard</h2>
+        <p>Stored System Data:</p>
+        <div id="data-display" class="dev-data"></div>
+        <button class="btn-wipe" onclick="wipeData()">WIPE ALL DATA</button>
+        <button onclick="logout()" style="margin-top:10px; background:#475569">Exit Dev Mode</button>
+    </div>
+
+    <script>
+        const DEV_KEY = "demon";
+
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const code = document.getElementById('dev-code').value;
+
+            if (code === DEV_KEY) {
+                showScreen('dev-screen');
+                loadDevData();
+            } else {
+                if(!user) return alert("Enter a username!");
+                document.getElementById('greet').innerText = `Hello, ${user}`;
+                showScreen('user-screen');
+                // Pre-load existing notes if any
+                document.getElementById('user-notes').value = localStorage.getItem('user_notes') || "";
+            }
+        }
+
+        function showScreen(screenId) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('user-screen').classList.add('hidden');
+            document.getElementById('dev-screen').classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // USER FEATURES
+        function saveData() {
+            const notes = document.getElementById('user-notes').value;
+            localStorage.setItem('user_notes', notes);
+            alert("Data stored in local memory!");
+        }
+
+        // CLICK FX LOGIC
+        const fxBox = document.getElementById('fx-box');
+        fxBox.addEventListener('mousedown', (e) => {
+            const spark = document.createElement('div');
+            spark.classList.add('click-spark');
+            // Random color for each click
+            const colors = ['#6366f1', '#ec4899', '#22c55e', '#eab308'];
+            spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Position relative to the box
+            const rect = fxBox.getBoundingClientRect();
+            spark.style.left = (e.clientX - rect.left) + 'px';
+            spark.style.top = (e.clientY - rect.top) + 'px';
+            
+            fxBox.appendChild(spark);
+            setTimeout(() => spark.remove(), 500);
+        });
+
+        // DEVELOPER FEATURES
+        function loadDevData() {
+            const display = document.getElementById('data-display');
+            const data = localStorage.getItem('user_notes');
+            display.innerText = data ? `Notes found: ${data}` : "No user data found.";
+        }
+
+        function wipeData() {
+            if(confirm("Are you sure you want to delete all stored notes?")) {
+                localStorage.clear();
+                loadDevData();
+                alert("Database wiped.");
+            }
+        }
+
+        function logout() {
+            location.reload(); // Quickest way to reset state
+        }
+    </script>
+</body>
+</html>
